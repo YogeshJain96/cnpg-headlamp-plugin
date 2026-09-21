@@ -19,6 +19,9 @@ A [Headlamp](https://headlamp.dev/) plugin for managing and visualizing [CloudNa
     <td><img src="img/scheduled-backup-list.png" alt="Scheduled backups list" width="400"></td>
     <td><img src="img/database-detail.png" alt="Database detail" width="400"></td>
   </tr>
+  <tr>
+    <td><img src="img/live-metrics.png" alt="Scheduled backups list" width="400"></td>
+  </tr>
 </table>
 
 ## Features
@@ -31,7 +34,7 @@ List and detail views, plus a guided creation form.
 - Instance roles and synchronous replication warnings
 - Per-instance Postgres logs (filterable, color-coded, live-following)
 - A `psql` terminal against the primary or any replica
-- A **Live Metrics** section on the cluster's detail page: Postgres metrics as square tiles, grouped by category, each read via `psql` exec, with an (i) icon showing the exact query, an optional auto-refresh interval (5s/10s/30s/off), and general health (active connections, cache hit ratio, database size, blocked queries, deadlocks) switchable per instance via a dropdown; CNPG-specific replication/archiving state (connected standbys, replication lag, inactive replication slots, WAL archiving failures) always reads the primary
+- A **Live Metrics** section on the cluster's detail page, scraped from each instance's CNPG Prometheus exporter (port 9187) via the Kubernetes API's pod proxy subresource, with no `psql` or exec involved. It is organized into collapsible categories: **Replication & Archiving** (primary only: connected standbys, replication lag, inactive slots, WAL archiving failures, backlog and timing, sync replica counts, plus per standby and per slot detail tables), **General Health** and **Checkpointing** (both switchable per instance via a dropdown: connections, cache hit ratio, database size, blocked and long running queries, deadlocks, checkpoint and restartpoint counts), and **Database Health** (transaction ID and multixact age, rollback ratio, temp file spill, and extension updates, per database). A status strip flags fencing, a pending manual switchover, or available extension updates when applicable. Tiles show an (i) icon with a short description and the underlying `cnpg_*` metric name(s), with an optional automatic refresh interval (15s/30s/60s or off, matched to the exporter's own 30 second refresh cadence)
 - A manual **switchover** action to promote a chosen replica to primary
 - Leader-election **lease** details (holder, acquire/renew time, duration, transitions) alongside the cluster's main info
 - Creation form (with live YAML preview) covering instances/HA, storage and tablespaces, backup configuration, volume snapshots, and bootstrap — including bootstrapping a new cluster from an existing backup
