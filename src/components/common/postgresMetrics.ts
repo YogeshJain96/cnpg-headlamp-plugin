@@ -43,7 +43,7 @@ export const POSTGRES_METRICS: Record<string, PostgresMetric> = {
     category: CNPG_REPLICATION,
     primaryOnly: true,
     description:
-      'The largest replay-lag gap, in bytes, among all connected standbys — how far behind the most-lagging replica is.',
+      'Maximum difference, in bytes, between the current WAL location and the WAL location replayed by a standby.',
     metricNames: ['cnpg_pg_stat_replication_replay_diff_bytes'],
     compute: series => formatBytes(maxMetric(series, 'cnpg_pg_stat_replication_replay_diff_bytes')),
   },
@@ -52,7 +52,7 @@ export const POSTGRES_METRICS: Record<string, PostgresMetric> = {
     category: CNPG_REPLICATION,
     primaryOnly: true,
     description:
-      'Replication slots with no client connected. An inactive slot still retains WAL indefinitely, which can fill up disk if left unused.',
+      'Number of replication slots that are currently inactive. Inactive slots can retain WAL and consume disk space until they become active or are removed.',
     metricNames: ['cnpg_pg_replication_slots_active'],
     compute: series =>
       String(countMetricWhere(series, 'cnpg_pg_replication_slots_active', value => value === 0)),
@@ -128,7 +128,7 @@ export const POSTGRES_METRICS: Record<string, PostgresMetric> = {
     label: 'Cache Hit Ratio (%)',
     category: GENERAL_HEALTH,
     description:
-      "Percentage of data blocks served from Postgres's shared buffer cache instead of disk, summed across all databases. Lower values can indicate memory pressure.",
+      "Percentage of data blocks found in PostgreSQL's shared buffer cache rather than read from disk, aggregated across all databases. A lower ratio means more block reads are being served from disk.",
     metricNames: ['cnpg_pg_stat_database_blks_hit', 'cnpg_pg_stat_database_blks_read'],
     compute: series => {
       const hit = sumMetric(series, 'cnpg_pg_stat_database_blks_hit');
@@ -174,14 +174,14 @@ export const POSTGRES_METRICS: Record<string, PostgresMetric> = {
     label: 'Requested Checkpoints',
     category: CHECKPOINTING,
     description:
-      'Checkpoints triggered because too much WAL accumulated, rather than on a schedule. A high count relative to scheduled checkpoints can mean max_wal_size is too small.',
+      'Number of requested checkpoints that have been performed since statistics were last reset.',
     metricNames: ['cnpg_pg_stat_checkpointer_checkpoints_req'],
     compute: series => String(scalarMetric(series, 'cnpg_pg_stat_checkpointer_checkpoints_req')),
   },
   scheduledCheckpoints: {
     label: 'Scheduled Checkpoints',
     category: CHECKPOINTING,
-    description: 'Checkpoints triggered on the regular checkpoint_timeout schedule.',
+    description: 'Number of checkpoints performed due to timeout since statistics were last reset.',
     metricNames: ['cnpg_pg_stat_checkpointer_checkpoints_timed'],
     compute: series => String(scalarMetric(series, 'cnpg_pg_stat_checkpointer_checkpoints_timed')),
   },
@@ -189,7 +189,7 @@ export const POSTGRES_METRICS: Record<string, PostgresMetric> = {
     label: 'Requested Restartpoints',
     category: CHECKPOINTING,
     description:
-      'The replica equivalent of requested checkpoints — restartpoints triggered because too much WAL accumulated during recovery.',
+      'Number of requested restartpoints performed during recovery since statistics were last reset.',
     metricNames: ['cnpg_pg_stat_checkpointer_restartpoints_req'],
     compute: series => String(scalarMetric(series, 'cnpg_pg_stat_checkpointer_restartpoints_req')),
   },
@@ -197,7 +197,7 @@ export const POSTGRES_METRICS: Record<string, PostgresMetric> = {
     label: 'Scheduled Restartpoints',
     category: CHECKPOINTING,
     description:
-      'The replica equivalent of scheduled checkpoints — restartpoints triggered on the regular schedule during recovery.',
+      'Number of restartpoints performed due to timeout during recovery since statistics were last reset.',
     metricNames: ['cnpg_pg_stat_checkpointer_restartpoints_timed'],
     compute: series =>
       String(scalarMetric(series, 'cnpg_pg_stat_checkpointer_restartpoints_timed')),
